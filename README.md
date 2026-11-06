@@ -1,29 +1,31 @@
-# DSH 容器
+# DSH Container
 
-DSH 左栏容器面板：管理 macOS 上的 Docker（colima / Docker Desktop / OrbStack / remote context）和 Apple `container`。
+English | [简体中文](README.zh-CN.md)
 
-![概览](docs/docker-overview.png)
+![Overview](docs/docker-overview.png)
 
-## 功能
+A DSH sidebar panel for managing containers on macOS: Docker (colima / Docker Desktop / OrbStack / remote contexts) and Apple `container`.
 
-- Docker / Apple container 双 provider，运行时状态、上下文切换
-- 容器、镜像、卷、网络、Compose、命令
-- 容器启动/停止/重启/删除，镜像 pull/inspect/delete
-- 查看日志、inspect、实时 follow
-- **Attach**：Docker `docker attach`；Apple `container exec`
-- **Exec**：进入容器内部 shell（`docker exec -it <id> /bin/sh`）
-- 镜像架构列（arm64/amd64）
-- 只读 AI 工具：`container_status`、`container_list`、`container_inspect`、`container_logs`
-- AI 诊断会新建独立会话，不污染当前对话
+## Features
 
-## 要求
+- Two providers, Docker and Apple container, with runtime status and context switching
+- Containers, images, volumes, networks, Compose, and commands
+- Start / stop / restart / delete containers; pull / inspect / delete images
+- Logs, inspect, and live follow
+- **Attach**: `docker attach` for Docker; `container exec` for Apple
+- **Exec**: open a shell inside a container (`docker exec -it <id> /bin/sh`)
+- Image architecture column (arm64/amd64)
+- Read-only AI tools: `container_status`, `container_list`, `container_inspect`, `container_logs`
+- AI diagnosis opens a separate session and leaves the current conversation untouched
+
+## Requirements
 
 - macOS
 - DSH 0.2.x
-- Docker CLI；或安装 [Apple container](https://github.com/apple/container)
-- 网络代理按本机环境配置
+- Docker CLI, or [Apple container](https://github.com/apple/container)
+- Configure any network proxy for your own environment
 
-## 安装
+## Install
 
 GitHub: https://github.com/Zaynervewreck/dsh-plugin-container
 
@@ -31,72 +33,74 @@ GitHub: https://github.com/Zaynervewreck/dsh-plugin-container
 dsh plugin --profile desktop add dsh-plugin-container
 ```
 
-重启 DSH。安装器会自动写入 `dsh.profile.bundles`，**不需要手改 `cordis.patch.yml`**。
+Restart DSH. The installer writes `dsh.profile.bundles` for you, so **you do not need to edit `cordis.patch.yml` by hand**.
 
-本地开发版：
+Local development build:
 
 ```bash
 node scripts/install-profile.mjs --home "$HOME/.dsh" --profile desktop
 ```
 
-源码路径模式与 npm 包模式不要同时启用。
+Do not enable source-path mode and npm-package mode at the same time.
 
-## 使用
+## Usage
 
-1. 左栏打开 **容器**
-2. 顶部切换 Docker / Apple container
-3. 容器行操作：
-   - 启动 / 停止 / 重启 / 删除
-   - 日志 / Follow / Inspect
-   - Attach：接管容器主进程
-   - Exec：在容器内开一个新 shell
-   - 问 AI / 诊断：新建独立 DSH 会话，调用只读容器工具
-4. 镜像 tab 可查看架构，或直接用镜像启动容器
+1. Open **Containers** in the left sidebar
+2. Switch between Docker and Apple container at the top
+3. Container row actions:
+   - Start / stop / restart / delete
+   - Logs / Follow / Inspect
+   - Attach: take over the container's main process
+   - Exec: open a new shell inside the container
+   - Ask AI / Diagnose: starts a separate DSH session that calls the read-only container tools
+4. The Images tab shows architecture and can start a container directly from an image
 
-## 安全
+## Security
 
-- 所有 Docker/Apple 命令以当前用户权限执行
-- 无 shell 拼接；命令拆成 argv 直接 spawn
-- 删除、stop、prune 等危险操作需要确认
-- AI 工具只读，不提供 start/stop/rm/prune tool
-- 日志和 inspect 被标记为不可信数据，不能作为指令执行
+- All Docker/Apple commands run with the current user's permissions
+- No shell string concatenation; commands are split into argv and spawned directly
+- Dangerous actions such as delete, stop, and prune require confirmation
+- AI tools are read-only; there are no start/stop/rm/prune tools
+- Logs and inspect output are marked as untrusted data and are never executed as instructions
 
-## 发布
+## Release
 
-发布由 GitHub Actions 完成，npm token 放在仓库 Secrets：
+Releases are published by GitHub Actions. The npm token is stored in the repository secrets:
 
-1. GitHub 仓库 → Settings → Secrets and variables → Actions
-2. 新建 `NPM_TOKEN`，值为 npm Granular Access Token（需要 Bypass 2FA、Read and write）
-3. 更新版本并打 tag：
+1. GitHub repository → Settings → Secrets and variables → Actions
+2. Create `NPM_TOKEN` with an npm Granular Access Token (Bypass 2FA, Read and write)
+3. Bump the version and tag:
 
 ```bash
 npm version patch
 git push --follow-tags
 ```
 
-`Release` workflow 会校验 tag 与 `package.json` 版本一致，然后执行：
+The `Release` workflow checks that the tag matches the `package.json` version, then runs:
 
 ```bash
 npm publish --access public --provenance
 ```
 
-## 开发
+## Development
 
 ```bash
 npm install
 npm run build     # src/client -> lib/client.js
 npm test          # 46 tests
-npm pack          # 发布前检查
+npm pack          # pre-release check
 ```
 
-主要结构：
+> `@deepseek-ai/dsh-tools` is provided by the host app. **Do not** add it to `dependencies` or `peerDependencies`. Otherwise installing the plugin puts an older copy in the profile's `node_modules`, which shadows the host's own version, leaves the `tools` service missing, and DSH fails to start. Keep it in `devDependencies` only.
+
+Layout:
 
 ```text
-index.js                 Host 入口
-cordis.patch.yml         bundle 安装 patch
-src/host/service.js      provider 路由 + Docker
+index.js                 Host entry
+cordis.patch.yml         Bundle install patch
+src/host/service.js      Provider routing + Docker
 src/host/apple.js        Apple container
 src/host/attach.js       Attach/Exec PTY
-src/host/tools.js        只读 Agent Tools
-src/client/              页面、tabs、i18n、styles
+src/host/tools.js        Read-only agent tools
+src/client/              Pages, tabs, i18n, styles
 ```

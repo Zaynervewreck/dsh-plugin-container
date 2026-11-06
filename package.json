@@ -17,6 +17,7 @@
     "src/**/*.jsx",
     "cordis.patch.yml",
     "README.md",
+    "README.zh-CN.md",
     "docs/*.png"
   ],
   "dsh": {
@@ -40,9 +41,7 @@
     "prepack": "npm run build && npm test"
   },
   "devDependencies": {
-    "esbuild": "0.25.0"
-  },
-  "dependencies": {
+    "esbuild": "0.25.0",
     "@deepseek-ai/dsh-tools": "^0.2.1-rc.5"
   },
   "license": "MIT",
