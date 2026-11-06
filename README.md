@@ -61,6 +61,27 @@ node scripts/install-profile.mjs --home "$HOME/.dsh" --profile desktop
 - AI 工具只读，不提供 start/stop/rm/prune tool
 - 日志和 inspect 被标记为不可信数据，不能作为指令执行
 
+## 发布
+
+发布由 GitHub Actions 完成，npm token 放在仓库 Secrets：
+
+1. GitHub 仓库 → Settings → Secrets and variables → Actions
+2. 新建 `NPM_TOKEN`，值为 npm Granular Access Token（需要 Bypass 2FA、Read and write）
+3. 更新版本并打 tag：
+
+```bash
+npm version patch
+git push
+git tag v0.3.1
+git push origin v0.3.1
+```
+
+`Release` workflow 会校验 tag 与 `package.json` 版本一致，然后执行：
+
+```bash
+npm publish --access public --provenance
+```
+
 ## 开发
 
 ```bash
