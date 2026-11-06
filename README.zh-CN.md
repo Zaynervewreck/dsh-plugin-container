@@ -10,7 +10,7 @@ DSH 左栏容器面板：管理 macOS 上的 Docker（colima / Docker Desktop / 
 
 - Docker / Apple container 双 provider，运行时状态、上下文切换
 - 容器、镜像、卷、网络、Compose、命令
-- 容器启动/停止/重启/删除，镜像 pull/inspect/delete
+- 容器启动/停止/重启/删除，镜像 pull/push/build/inspect/delete
 - 查看日志、inspect、实时 follow
 - **Attach**：Docker `docker attach`；Apple `container exec`
 - **Exec**：进入容器内部 shell（`docker exec -it <id> /bin/sh`）
@@ -52,6 +52,8 @@ node scripts/install-profile.mjs --home "$HOME/.dsh" --profile desktop
    - 日志 / Follow / Inspect
    - Attach：接管容器主进程
    - Exec：在容器内开一个新 shell
+   - Build：用绝对路径构建上下文和可选 Dockerfile 构建镜像
+   - Push：把镜像推送到 registry
    - 问 AI / 诊断：新建独立 DSH 会话，调用只读容器工具
 4. 镜像 tab 可查看架构，或直接用镜像启动容器
 
@@ -87,7 +89,7 @@ npm publish --access public --provenance
 ```bash
 npm install
 npm run build     # src/client -> lib/client.js
-npm test          # 46 tests
+npm test          # 47 tests
 npm pack          # 发布前检查
 ```
 

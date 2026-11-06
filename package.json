@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-container",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "private": false,
   "description": "DSH sidebar container panel for macOS Docker runtimes and Apple container",
   "type": "module",
@@ -41,8 +41,7 @@
     "prepack": "npm run build && npm test"
   },
   "devDependencies": {
-    "esbuild": "0.25.0",
-    "@deepseek-ai/dsh-tools": "^0.2.1-rc.5"
+    "esbuild": "0.25.0"
   },
   "license": "MIT",
   "keywords": [
@@ -68,5 +67,8 @@
   "bugs": {
     "url": "https://github.com/Zaynervewreck/dsh-plugin-container/issues"
   },
-  "author": "Zaynervewreck"
+  "author": "Zaynervewreck",
+  "dependencies": {
+    "@deepseek-ai/dsh-tools": "^0.2.1-rc.5"
+  }
 }

@@ -10,7 +10,7 @@ A DSH sidebar panel for managing containers on macOS: Docker (colima / Docker De
 
 - Two providers, Docker and Apple container, with runtime status and context switching
 - Containers, images, volumes, networks, Compose, and commands
-- Start / stop / restart / delete containers; pull / inspect / delete images
+- Start / stop / restart / delete containers; pull / push / build / inspect / delete images
 - Logs, inspect, and live follow
 - **Attach**: `docker attach` for Docker; `container exec` for Apple
 - **Exec**: open a shell inside a container (`docker exec -it <id> /bin/sh`)
@@ -52,6 +52,8 @@ Do not enable source-path mode and npm-package mode at the same time.
    - Logs / Follow / Inspect
    - Attach: take over the container's main process
    - Exec: open a new shell inside the container
+   - Build: build an image from an absolute context path and optional Dockerfile
+   - Push: push an image to its registry
    - Ask AI / Diagnose: starts a separate DSH session that calls the read-only container tools
 4. The Images tab shows architecture and can start a container directly from an image
 
@@ -87,7 +89,7 @@ npm publish --access public --provenance
 ```bash
 npm install
 npm run build     # src/client -> lib/client.js
-npm test          # 46 tests
+npm test          # 47 tests
 npm pack          # pre-release check
 ```
 

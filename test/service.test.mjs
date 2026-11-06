@@ -350,3 +350,25 @@ test('exec mode starts docker exec PTY instead of attach', async () => {
   ])
   service.dispose()
 })
+
+test('image push and build map to docker CLI actions', async () => {
+  const { service, subprocess } = makeService()
+  const push = await service.action({ kind: 'image', action: 'push', id: 'nginx:latest' }, undefined)
+  assert.equal(push.run.status === 'running' || push.run.status === 'exited', true)
+  assert.deepEqual(subprocess.specs.at(-1).argv, [executablePath, '--context', 'colima', 'push', 'nginx:latest'])
+
+  const build = await service.action({
+    kind: 'image',
+    action: 'build',
+    tag: 'my-app:latest',
+    contextPath: '/tmp',
+    dockerfile: 'Dockerfile',
+    noCache: true,
+  }, undefined)
+  assert.equal(build.run.status === 'running' || build.run.status === 'exited', true)
+  assert.deepEqual(subprocess.specs.at(-1).argv, [
+    executablePath, '--context', 'colima',
+    'build', '--progress', 'plain', '-t', 'my-app:latest', '-f', 'Dockerfile', '--no-cache', '/tmp',
+  ])
+  service.dispose()
+})

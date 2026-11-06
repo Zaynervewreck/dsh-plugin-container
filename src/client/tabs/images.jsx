@@ -11,15 +11,17 @@ import {
   displayValue,
   shortId,
 } from '../components.jsx'
+import BuildImageDialog from '../build-image.jsx'
 import { useDockerList } from '../hooks.js'
-import { IconAlert, IconImage, IconInfo, IconPlay, IconTrash, IconDownload } from '../icons.jsx'
+import { IconAlert, IconBuild, IconDownload, IconImage, IconInfo, IconPlay, IconTrash, IconUpload } from '../icons.jsx'
 
 const IMAGE_REF = /^[A-Za-z0-9][A-Za-z0-9_.:/@-]*$/u
 
-export default function ImagesTab({ t, api, provider, context, status, refreshToken, features = [], onAction, onRunContainer, onInspect, onNotify }) {
+export default function ImagesTab({ t, api, provider, context, status, refreshToken, features = [], cwd, onAction, onRunContainer, onInspect, onNotify }) {
   const showArchitecture = features.includes('image-architecture')
   const [search, setSearch] = useState('')
   const [pull, setPull] = useState('')
+  const [buildOpen, setBuildOpen] = useState(false)
   const enabled = status?.daemon?.state === 'running'
   const list = useDockerList(api, provider, 'images', context, { refreshToken, enabled })
   const items = list.data?.items ?? []
@@ -61,6 +63,9 @@ export default function ImagesTab({ t, api, provider, context, status, refreshTo
         <div className="dsh-docker-toolbar-right">
           <span className="dsh-docker-muted">{filtered.length} / {items.length}</span>
           {!showArchitecture && <span className="dsh-docker-muted">{t('restartForArchitecture')}</span>}
+          {features.includes('image-build') && (
+            <Button size="sm" onClick={() => setBuildOpen(true)}><IconBuild size={13} /> {t('buildImage')}</Button>
+          )}
           <Button size="sm" onClick={list.reload} disabled={list.loading}>{t('refresh')}</Button>
         </div>
       </div>
@@ -106,6 +111,11 @@ export default function ImagesTab({ t, api, provider, context, status, refreshTo
                             <IconPlay size={14} />
                           </IconButton>
                         )}
+                        {features.includes('image-push') && item.name !== '<none>' && (
+                          <IconButton size="sm" label={t('pushImage')} onClick={() => onAction({ kind: 'image', action: 'push', id: item.name }, { focusConsole: true })}>
+                            <IconUpload size={14} />
+                          </IconButton>
+                        )}
                         <IconButton size="sm" label={t('inspect')} onClick={() => onInspect('image', inspectId)}>
                           <IconInfo size={14} />
                         </IconButton>
@@ -122,6 +132,17 @@ export default function ImagesTab({ t, api, provider, context, status, refreshTo
           </div>
         </section>
       )}
+
+      <BuildImageDialog
+        open={buildOpen}
+        t={t}
+        provider={provider}
+        cwd={cwd}
+        onClose={() => setBuildOpen(false)}
+        onSubmit={async (input) => {
+          await onAction(input, { focusConsole: true })
+        }}
+      />
     </div>
   )
 }

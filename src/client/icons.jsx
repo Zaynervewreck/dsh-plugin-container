@@ -214,6 +214,20 @@ export const IconExec = (props) => (
   </Svg>
 )
 
+export const IconUpload = (props) => (
+  <Svg {...props}>
+    <path d="M12 16V4M7.5 8.5 12 4l4.5 4.5" />
+    <path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" />
+  </Svg>
+)
+
+export const IconBuild = (props) => (
+  <Svg {...props}>
+    <path d="M14.5 5.5 18.5 9.5M4 20l4.2-1 10.9-10.9a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
+    <path d="m13.2 6.8 4 4" />
+  </Svg>
+)
+
 export const IconAttach = (props) => (
   <Svg {...props}>
     <path d="M9.5 14.5 14.5 9.5" />

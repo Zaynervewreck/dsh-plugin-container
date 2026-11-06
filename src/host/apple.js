@@ -397,6 +397,20 @@ export class AppleProvider {
       if (action === 'pull') {
         return this.run({ argv: ['image', 'pull', safeImageRef(payload.id ?? payload.reference)], cwd: payload.cwd, title: payload.title ?? 'container image pull' }, signal)
       }
+      if (action === 'push') {
+        return this.run({ argv: ['image', 'push', safeImageRef(payload.id ?? payload.reference)], cwd: payload.cwd, title: payload.title ?? 'container image push' }, signal)
+      }
+      if (action === 'build') {
+        const tag = safeImageRef(payload.tag)
+        const contextPath = resolveCwd(payload.contextPath === undefined ? this.home : requireString(payload.contextPath, 'contextPath'), { fallback: this.home, statSync })
+        const dockerfile = payload.dockerfile === undefined || payload.dockerfile === null ? undefined : requireString(payload.dockerfile, 'dockerfile')
+        if (dockerfile !== undefined && (dockerfile.includes('\0') || dockerfile.startsWith('-') || dockerfile.length > 4096)) throw new CommandError('Dockerfile 路径不合法')
+        const argv = ['build', '--progress', 'plain', '-t', tag]
+        if (dockerfile !== undefined && dockerfile !== '') argv.push('-f', dockerfile)
+        if (payload.noCache === true) argv.push('--no-cache')
+        argv.push(contextPath)
+        return this.run({ argv, cwd: contextPath, timeoutMs: payload.timeoutMs ?? 15 * 60_000, title: payload.title ?? `container build ${tag}` }, signal)
+      }
       if (action === 'delete') {
         return this.run({ argv: ['image', 'delete', safeId(payload.id)], confirm: payload.confirm, cwd: payload.cwd, title: payload.title ?? 'container image delete' }, signal)
       }

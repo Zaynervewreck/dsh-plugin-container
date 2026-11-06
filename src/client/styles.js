@@ -220,6 +220,7 @@ const CSS = `
 .dsh-docker-field > span { font-size: 11.5px; color: var(--dsw-alias-label-secondary, #60636c); }
 .dsh-docker-textarea { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; font-family: var(--dsw-font-markdown-code-font-family, ui-monospace, Menlo, monospace); line-height: 1.5; }
 .dsh-docker-form-error { color: var(--dsw-alias-label-error, #d33c3c); font-size: 12px; }
+.dsh-docker-check { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--dsw-alias-label-secondary, #60636c); }
 
 
 .dsh-docker-table-wrap { overflow: auto; border-radius: 0 0 11px 11px; }

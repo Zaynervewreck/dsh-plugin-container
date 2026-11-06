@@ -256,7 +256,7 @@ export class DockerService {
     }
     providers.push(await this.apple.info(signal))
     const defaultProvider = providers.find((provider) => provider.id === 'docker' && provider.available)?.id ?? providers.find((provider) => provider.available)?.id ?? 'docker'
-    const features = ['attach', 'exec', 'run', 'image-architecture']
+    const features = ['attach', 'exec', 'run', 'image-architecture', 'image-push', 'image-build']
     if (this.toolsEnabled) features.push('ai-tools')
     return { providers, defaultProvider, features }
   }
@@ -736,6 +736,25 @@ export class DockerService {
         title: payload.title ?? `启动容器 ${image}`,
       }, signal)
     }
+    if (kind === 'image' && action === 'build') {
+      const tag = safeImageRef(payload.tag)
+      const contextPath = resolveCwd(optionalString(payload.contextPath, 'contextPath') ?? this.home, { fallback: this.home, statSync })
+      const dockerfile = optionalString(payload.dockerfile, 'dockerfile')
+      if (dockerfile !== undefined && (dockerfile.includes('\0') || dockerfile.startsWith('-') || dockerfile.length > 4096)) {
+        throw new CommandError('Dockerfile 路径不合法')
+      }
+      const argv = ['build', '--progress', 'plain', '-t', tag]
+      if (dockerfile !== undefined && dockerfile !== '') argv.push('-f', dockerfile)
+      if (payload.noCache === true) argv.push('--no-cache')
+      argv.push(contextPath)
+      return this.run({
+        argv,
+        context: payload.context,
+        cwd: contextPath,
+        timeoutMs: payload.timeoutMs ?? 15 * 60_000,
+        title: payload.title ?? `构建镜像 ${tag}`,
+      }, signal)
+    }
     const id = safeIdentifier(payload.id ?? payload.reference)
     let argv
     if (kind === 'container') {
@@ -746,6 +765,7 @@ export class DockerService {
       else if (action === 'logs') argv = ['logs', '--tail', payload.follow === true ? '100' : '500', ...(payload.follow === true ? ['-f'] : []), id]
     } else if (kind === 'image') {
       if (action === 'pull') argv = ['pull', id]
+      else if (action === 'push') argv = ['push', id]
       else if (action === 'delete') argv = ['rmi', id]
     } else if (kind === 'volume' && action === 'delete') {
       argv = ['volume', 'rm', id]
