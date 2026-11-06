@@ -71,9 +71,7 @@ node scripts/install-profile.mjs --home "$HOME/.dsh" --profile desktop
 
 ```bash
 npm version patch
-git push
-git tag v0.3.1
-git push origin v0.3.1
+git push --follow-tags
 ```
 
 `Release` workflow 会校验 tag 与 `package.json` 版本一致，然后执行：
