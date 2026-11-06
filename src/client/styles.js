@@ -358,6 +358,18 @@ const CSS = `
 @media (prefers-reduced-motion: reduce) {
   .dsh-docker-spinner, .dsh-docker-skel-line, .dsh-docker-toast { animation: none; }
 }
+.dsh-docker-hint { font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-tertiary, #8a8d96); }
+.dsh-docker-hint-warn { color: var(--dsw-alias-label-warning, #b7791f); }
+.dsh-docker-line-ok { font-size: 12px; color: var(--dsw-alias-label-success, #2f855a); }
+.dsh-docker-line-err { font-size: 12px; color: var(--dsw-alias-label-error, #d33c3c); }
+.dsh-docker-preview { margin: 0; padding: 8px 10px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; font-family: var(--dsw-font-markdown-code-font-family, ui-monospace, Menlo, monospace); font-size: 11.5px; line-height: 1.55; background: var(--dsw-alias-markdown-code-block, #f6f7f9); border: .5px solid var(--dsw-alias-border-l3, rgba(0,0,0,.08)); }
+.dsh-docker-chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dsh-docker-advanced { border-top: .5px solid var(--dsw-alias-border-l3, rgba(0,0,0,.08)); padding-top: 10px; }
+.dsh-docker-advanced > summary { cursor: pointer; font-size: 12px; color: var(--dsw-alias-label-secondary, #60636c); user-select: none; }
+.dsh-docker-advanced[open] > summary { margin-bottom: 10px; }
+.dsh-docker-advanced-body { display: flex; flex-direction: column; gap: 12px; }
+.dsh-docker-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+
 `
 
 export function injectStyles() {

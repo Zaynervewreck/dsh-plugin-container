@@ -2,6 +2,8 @@
 import { Component, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 
 import AttachDialog from './attach.jsx'
+import BuildImageDialog from './build-image.jsx'
+import PushImageDialog from './push-image.jsx'
 import RunContainerDialog from './run-container.jsx'
 import { cacheClear, DockerApiError } from './api.js'
 import {
@@ -16,6 +18,7 @@ import {
   ToastStack,
   cx,
   errorMessage,
+  fill,
   formatTime,
 } from './components.jsx'
 import { useDockerStatus, useProviders } from './hooks.js'
@@ -85,7 +88,7 @@ function tabCount(tab, status, counts) {
 }
 
 export default function DockerPage(props) {
-  const { t, api, runs, useStore, actions, startDiagnosis } = props
+  const { t, api, runs, useStore, actions, startDiagnosis, pickDirectory } = props
   const store = useStore((snapshot) => snapshot)
   const tab = store.tab
   const provider = store.provider
@@ -99,6 +102,9 @@ export default function DockerPage(props) {
   const [confirm, setConfirm] = useState(null)
   const [attach, setAttach] = useState({ open: false, loading: false, mode: 'attach', session: null, output: '', error: null })
   const [runDialog, setRunDialog] = useState({ open: false, image: '' })
+  const [pushDialog, setPushDialog] = useState({ open: false, image: '' })
+  const [buildDialog, setBuildDialog] = useState(false)
+  const watchedJob = useRef(null)
   const attachRef = useRef(null)
   const attachRequest = useRef(0)
   const [toasts, setToasts] = useState([])
@@ -464,6 +470,49 @@ export default function DockerPage(props) {
     }
   }, [actions, confirmThen, notify, provider, runs, scheduleListRefresh, t])
 
+  const openPush = useCallback((image) => setPushDialog({ open: true, image }), [])
+  const closePush = useCallback(() => setPushDialog({ open: false, image: '' }), [])
+  const openBuild = useCallback(() => setBuildDialog(true), [])
+  const closeBuild = useCallback(() => setBuildDialog(false), [])
+
+  /** Start pull/push/build; throws so dialogs can show the error inline. */
+  const startImageJob = useCallback(async ({ name, ...input }) => {
+    if (runs.active) throw new Error(t('imgJobBusy'))
+    const run = await runs.startAction({ provider, context: provider === 'docker' ? selectedContext : undefined, ...input })
+    if (run !== null) {
+      watchedJob.current = { id: run.id, action: input.action, name: name ?? input.id ?? input.tag }
+      actions.setTab('console')
+      scheduleListRefresh()
+    }
+    return run
+  }, [actions, provider, runs, scheduleListRefresh, selectedContext, t])
+
+  const pullImage = useCallback(async (reference, platform) => {
+    try {
+      await startImageJob({ kind: 'image', action: 'pull', id: reference, platform, name: platform === undefined ? reference : `${reference} (${platform})` })
+    } catch (error) {
+      notify('error', errorMessage(error))
+    }
+  }, [notify, startImageJob])
+
+  // Tell the user how a pull/push/build ended, with a login hint for rejected pushes.
+  useEffect(() => {
+    const watched = watchedJob.current
+    const run = runState.run
+    if (watched === null || run === null || run === undefined || run.id !== watched.id) return
+    if (run.status === 'running' || run.status === 'cancelling') return
+    watchedJob.current = null
+    if (run.status === 'cancelled') return
+    const key = watched.action === 'push' ? 'imgPush' : watched.action === 'build' ? 'imgBuild' : 'imgPull'
+    if (run.status === 'exited') {
+      notify('success', fill(t(`${key}Done`), { name: watched.name }))
+    } else if (key === 'imgPush' && /denied|unauthorized|authentication required|access forbidden/iu.test(`${runState.stderr}${runState.stdout}`)) {
+      notify('error', t('imgPushAuthFailed'))
+    } else {
+      notify('error', t(`${key}Failed`))
+    }
+  }, [notify, runState.run, runState.stderr, runState.stdout, t])
+
   const openTab = useCallback((next) => actions.setTab(next), [actions])
 
   const tabProps = {
@@ -479,6 +528,9 @@ export default function DockerPage(props) {
     onAction: runAction,
     onAttach: openAttach,
     onRunContainer: openRun,
+    onPullImage: pullImage,
+    onPushImage: openPush,
+    onBuildImage: openBuild,
     onAskAI: askAI,
     canAskAI,
     onRuntime: runRuntime,
@@ -653,6 +705,26 @@ export default function DockerPage(props) {
           initialImage={runDialog.image}
           onClose={closeRun}
           onSubmit={async (payload) => { await runAction(payload) }}
+        />
+
+        <PushImageDialog
+          open={pushDialog.open}
+          t={t}
+          provider={provider}
+          image={pushDialog.image}
+          onClose={closePush}
+          onSubmit={startImageJob}
+        />
+
+        <BuildImageDialog
+          open={buildDialog}
+          t={t}
+          api={api}
+          provider={provider}
+          defaultDir={cwd}
+          pickDirectory={pickDirectory}
+          onClose={closeBuild}
+          onSubmit={startImageJob}
         />
 
         <AttachDialog

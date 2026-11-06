@@ -10,7 +10,10 @@ A DSH sidebar panel for managing containers on macOS: Docker (colima / Docker De
 
 - Two providers, Docker and Apple container, with runtime status and context switching
 - Containers, images, volumes, networks, Compose, and commands
-- Start / stop / restart / delete containers; pull / inspect / delete images
+- Start / stop / restart / delete containers; pull / push / build / inspect / delete images
+- **Pull** with an optional architecture (`linux/amd64` / `linux/arm64`); a pasted `docker pull nginx` works too
+- **Build** an image from a project folder chosen with a folder picker: the form checks the folder, finds Dockerfiles, suggests a tag, and previews the command
+- **Push** an image: pick a target such as `username/app:tag` or `ghcr.io/username/app:tag`; it is tagged first when the name differs, with login hints and a clear message when the registry rejects the push
 - Logs, inspect, and live follow
 - **Attach**: `docker attach` for Docker; `container exec` for Apple
 - **Exec**: open a shell inside a container (`docker exec -it <id> /bin/sh`)
@@ -87,7 +90,7 @@ npm publish --access public --provenance
 ```bash
 npm install
 npm run build     # src/client -> lib/client.js
-npm test          # 46 tests
+npm test          # 53 tests
 npm pack          # pre-release check
 ```
 
@@ -99,6 +102,7 @@ Layout:
 index.js                 Host entry
 cordis.patch.yml         Bundle install patch
 src/host/service.js      Provider routing + Docker
+src/host/images.js       Image push/build validation
 src/host/apple.js        Apple container
 src/host/attach.js       Attach/Exec PTY
 src/host/tools.js        Read-only agent tools

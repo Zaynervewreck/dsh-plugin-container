@@ -23,6 +23,7 @@ import { AppleProvider } from './apple.js'
 import { AttachManager } from './attach.js'
 import { AppleCliError, AppleCommandError } from './apple-cli.js'
 import { DockerCli, DockerCliError, DockerCommandError } from './docker-cli.js'
+import { LONG_JOB_MS, buildArgv, buildSpec, inspectBuildContext, platformOf, pushSpec } from './images.js'
 import { JobManager } from './jobs.js'
 import {
   firstLine,
@@ -195,6 +196,8 @@ export class DockerService {
           })
         case 'providers':
           return ok(await this.providers(signal))
+        case 'buildContext':
+          return ok(inspectBuildContext(payload.path))
         case 'status':
         case 'list':
         case 'inspect':
@@ -256,7 +259,7 @@ export class DockerService {
     }
     providers.push(await this.apple.info(signal))
     const defaultProvider = providers.find((provider) => provider.id === 'docker' && provider.available)?.id ?? providers.find((provider) => provider.available)?.id ?? 'docker'
-    const features = ['attach', 'exec', 'run', 'image-architecture']
+    const features = ['attach', 'exec', 'run', 'image-architecture', 'image-push', 'image-build']
     if (this.toolsEnabled) features.push('ai-tools')
     return { providers, defaultProvider, features }
   }
@@ -736,6 +739,31 @@ export class DockerService {
         title: payload.title ?? `启动容器 ${image}`,
       }, signal)
     }
+    if (kind === 'image' && action === 'build') {
+      const spec = buildSpec(payload)
+      return this.run({
+        argv: buildArgv(spec),
+        context: payload.context,
+        cwd: spec.contextDir,
+        timeoutMs: LONG_JOB_MS,
+        title: payload.title ?? `构建镜像 ${spec.tag}`,
+      }, signal)
+    }
+    if (kind === 'image' && action === 'push') {
+      const { source, target } = pushSpec(payload)
+      if (target !== source) {
+        await this.cli.ensureDocker({ signal })
+        const resolved = await this.resolveContext(optionalString(payload.context, 'context'), signal)
+        await this.cli.docker(['tag', source, target], { context: resolved.name, signal, timeoutMs: 20_000 })
+      }
+      return this.run({
+        argv: ['push', target],
+        context: payload.context,
+        cwd: payload.cwd,
+        timeoutMs: LONG_JOB_MS,
+        title: payload.title ?? `推送镜像 ${target}`,
+      }, signal)
+    }
     const id = safeIdentifier(payload.id ?? payload.reference)
     let argv
     if (kind === 'container') {
@@ -745,7 +773,10 @@ export class DockerService {
       else if (action === 'delete') argv = ['rm', '-f', id]
       else if (action === 'logs') argv = ['logs', '--tail', payload.follow === true ? '100' : '500', ...(payload.follow === true ? ['-f'] : []), id]
     } else if (kind === 'image') {
-      if (action === 'pull') argv = ['pull', id]
+      if (action === 'pull') {
+        const platform = platformOf(payload.platform)
+        argv = ['pull', ...(platform === undefined ? [] : ['--platform', platform]), id]
+      }
       else if (action === 'delete') argv = ['rmi', id]
     } else if (kind === 'volume' && action === 'delete') {
       argv = ['volume', 'rm', id]

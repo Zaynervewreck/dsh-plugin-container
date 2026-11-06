@@ -18,6 +18,7 @@ import {
   resolveCwd,
 } from './commands.js'
 import { AppleCli } from './apple-cli.js'
+import { LONG_JOB_MS, buildArgv, buildSpec, platformOf, pushSpec } from './images.js'
 import { JobManager } from './jobs.js'
 import {
   firstLine,
@@ -395,7 +396,20 @@ export class AppleProvider {
     }
     if (kind === 'image') {
       if (action === 'pull') {
-        return this.run({ argv: ['image', 'pull', safeImageRef(payload.id ?? payload.reference)], cwd: payload.cwd, title: payload.title ?? 'container image pull' }, signal)
+        const platform = platformOf(payload.platform)
+        return this.run({ argv: ['image', 'pull', ...(platform === undefined ? [] : ['--platform', platform]), safeImageRef(payload.id ?? payload.reference)], cwd: payload.cwd, title: payload.title ?? 'container image pull' }, signal)
+      }
+      if (action === 'build') {
+        const spec = buildSpec(payload)
+        return this.run({ argv: buildArgv(spec), cwd: spec.contextDir, timeoutMs: LONG_JOB_MS, title: payload.title ?? `container build ${spec.tag}` }, signal)
+      }
+      if (action === 'push') {
+        const { source, target } = pushSpec(payload)
+        if (target !== source) {
+          const tagged = await this.cli.exec(['image', 'tag', source, target], { signal, cwd: this.home, timeoutMs: 20_000 })
+          if (tagged.exitCode !== 0) throw new CommandError(`${tagged.stderr}${tagged.stdout}`.trim() || `container image tag 退出码 ${String(tagged.exitCode)}`, 'container/exec-failed')
+        }
+        return this.run({ argv: ['image', 'push', target], cwd: payload.cwd, timeoutMs: LONG_JOB_MS, title: payload.title ?? `container image push ${target}` }, signal)
       }
       if (action === 'delete') {
         return this.run({ argv: ['image', 'delete', safeId(payload.id)], confirm: payload.confirm, cwd: payload.cwd, title: payload.title ?? 'container image delete' }, signal)

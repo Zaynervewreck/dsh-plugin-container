@@ -10,7 +10,10 @@ DSH 左栏容器面板：管理 macOS 上的 Docker（colima / Docker Desktop / 
 
 - Docker / Apple container 双 provider，运行时状态、上下文切换
 - 容器、镜像、卷、网络、Compose、命令
-- 容器启动/停止/重启/删除，镜像 pull/inspect/delete
+- 容器启动/停止/重启/删除，镜像 pull/push/build/inspect/delete
+- **拉取镜像**：可选指定架构（`linux/amd64` / `linux/arm64`），也可以直接粘贴 `docker pull nginx` 整条命令
+- **构建镜像**：用文件夹选择器选择项目目录，表单会实时检查目录、识别 Dockerfile、推荐镜像名，并预览将执行的命令
+- **推送镜像**：选择目标名，如 `用户名/app:tag` 或 `ghcr.io/用户名/app:tag`；名字不同时会先打标签，带登录提示，被仓库拒绝时给出明确说明
 - 查看日志、inspect、实时 follow
 - **Attach**：Docker `docker attach`；Apple `container exec`
 - **Exec**：进入容器内部 shell（`docker exec -it <id> /bin/sh`）
@@ -87,7 +90,7 @@ npm publish --access public --provenance
 ```bash
 npm install
 npm run build     # src/client -> lib/client.js
-npm test          # 46 tests
+npm test          # 53 tests
 npm pack          # 发布前检查
 ```
 
@@ -99,6 +102,7 @@ npm pack          # 发布前检查
 index.js                 Host 入口
 cordis.patch.yml         bundle 安装 patch
 src/host/service.js      provider 路由 + Docker
+src/host/images.js       镜像 push/build 校验
 src/host/apple.js        Apple container
 src/host/attach.js       Attach/Exec PTY
 src/host/tools.js        只读 Agent Tools

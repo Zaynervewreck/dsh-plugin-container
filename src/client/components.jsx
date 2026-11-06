@@ -313,6 +313,11 @@ export function displayValue(value) {
 }
 
 /** @param {unknown} error */
+/** Replace `{key}` placeholders in a localized string. */
+export function fill(text, values = {}) {
+  return String(text).replace(/\{(\w+)\}/gu, (match, key) => (values[key] === undefined ? match : String(values[key])))
+}
+
 export function errorMessage(error) {
   if (error === undefined || error === null) return ''
   if (error instanceof Error) return error.message

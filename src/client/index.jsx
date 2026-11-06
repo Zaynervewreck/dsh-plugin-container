@@ -38,6 +38,20 @@ export function apply(ctx) {
     return sessionId
   }
 
+  // Desktop exposes the OS chooser directly; other peers go through the workspace UI.
+  const pickDirectory = async () => {
+    const desktop = globalThis.__DSH_DIRECTORY_PICKER__
+    if (desktop !== undefined && typeof desktop.pick === 'function') return desktop.pick()
+    const workspace = ctx.get('uiWorkspace')
+    if (typeof workspace?.pickDirectory === 'function') return workspace.pickDirectory()
+    throw new Error('unsupported')
+  }
+  const canPickDirectory = () => (
+    (globalThis.__DSH_DIRECTORY_PICKER__ !== undefined && typeof globalThis.__DSH_DIRECTORY_PICKER__.pick === 'function') ||
+    typeof ctx.get('uiWorkspace')?.pickDirectory === 'function'
+  )
+  pickDirectory.available = canPickDirectory
+
   const handle = createDockerStore()
   const instance = handle.create()
   const store = { ...handle, create: () => instance }
@@ -51,7 +65,7 @@ export function apply(ctx) {
         key: 'docker',
         locale: NS,
         store,
-        inject: () => ({ api, runs, startDiagnosis }),
+        inject: () => ({ api, runs, startDiagnosis, pickDirectory }),
       },
       DockerPage,
     )

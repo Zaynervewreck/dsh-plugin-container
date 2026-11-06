@@ -279,3 +279,30 @@ test('apple run-container action maps to container run', async () => {
     'alpine:latest', 'sleep', '10',
   ])
 })
+
+test('apple image push retags first and build maps to container build', async () => {
+  const { mkdtempSync, rmSync, writeFileSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { provider, subprocess } = makeProvider()
+  const dir = mkdtempSync(join(tmpdir(), 'dsh-apple-build-'))
+  writeFileSync(join(dir, 'Dockerfile'), 'FROM scratch\n')
+  try {
+    await provider.action({ kind: 'image', action: 'push', id: 'app:1', target: 'me/app:1' }, undefined)
+    const argvs = subprocess.specs.map((spec) => spec.argv.slice(1).join(' '))
+    assert.equal(argvs.at(-2), 'image tag app:1 me/app:1')
+    assert.equal(argvs.at(-1), 'image push me/app:1')
+
+    await provider.action({ kind: 'image', action: 'build', tag: 'app:2', contextDir: dir, platform: 'linux/arm64' }, undefined)
+    assert.deepEqual(subprocess.specs.at(-1).argv, [executablePath, 'build', '-t', 'app:2', '--platform', 'linux/arm64', dir])
+    assert.equal(subprocess.specs.at(-1).cwd, dir)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('apple pull accepts an optional platform', async () => {
+  const { provider, subprocess } = makeProvider()
+  await provider.action({ kind: 'image', action: 'pull', id: 'alpine:latest', platform: 'linux/arm64' }, undefined)
+  assert.deepEqual(subprocess.specs.at(-1).argv, [executablePath, 'image', 'pull', '--platform', 'linux/arm64', 'alpine:latest'])
+})
