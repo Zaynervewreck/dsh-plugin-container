@@ -1,0 +1,3 @@
+- insert:
+    - id: docker-sidebar
+      name: dsh-plugin-container

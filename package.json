@@ -1,0 +1,73 @@
+{
+  "name": "dsh-plugin-container",
+  "version": "0.3.0",
+  "private": false,
+  "description": "DSH sidebar container panel for macOS Docker runtimes and Apple container",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/client.js",
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "cordis.patch.yml",
+    "README.md",
+    "docs/*.png"
+  ],
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "install-profile": "node scripts/install-profile.mjs",
+    "test": "node --test test/*.test.mjs",
+    "prepack": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-tools": "^0.2.1-rc.5"
+  },
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "docker",
+    "apple-container",
+    "macos",
+    "containers"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zaynervewreck/dsh-plugin-container.git"
+  },
+  "homepage": "https://github.com/Zaynervewreck/dsh-plugin-container#readme",
+  "bugs": {
+    "url": "https://github.com/Zaynervewreck/dsh-plugin-container/issues"
+  },
+  "author": "Zaynervewreck"
+}
